@@ -1,5 +1,5 @@
 import dotenv from "dotenv";
-dotenv.config(); // ALWAYS first
+dotenv.config(); // MUST be first
 
 import express from "express";
 import cookieParser from "cookie-parser";
@@ -14,46 +14,44 @@ import { app, server } from "./lib/socket.js";
 const PORT = process.env.PORT || 5000;
 const __dirname = path.resolve();
 
-// middlewares
+/* ===================== MIDDLEWARES ===================== */
+
 app.use(express.json());
 app.use(cookieParser());
+
+const allowedOrigins = [
+  "http://localhost:5173",
+  "https://chat-app1-5vrv.onrender.com",
+  "https://chat-app1-kdzf.onrender.com",
+];
+
 app.use(
   cors({
     origin: (origin, callback) => {
-      const allowedOrigins = [
-        "http://localhost:5173",
-        "https://chat-app1-5vrv.onrender.com",
-        "https://chat-app1-kdzf.onrender.com"
-      ];
-
       if (!origin) return callback(null, true);
 
       if (allowedOrigins.includes(origin)) {
-        callback(null, true);
+        return callback(null, true);
       } else {
-        callback(new Error("CORS not allowed"));
+        return callback(new Error("CORS not allowed"));
       }
     },
     credentials: true,
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
+// 🔥 THIS FIXES THE PREFLIGHT (MOST IMPORTANT LINE)
+app.options("*", cors());
 
+/* ===================== ROUTES ===================== */
 
-// routes
 app.use("/api/auth", authRoutes);
 app.use("/api/message", messageRoute);
 
-// production frontend serve
-if (process.env.NODE_ENV === "production") {
-  app.use(express.static(path.join(__dirname, "../frontend/dist")));
+/* ===================== SERVER START ===================== */
 
-  app.get("*", (req, res) => {
-    res.sendFile(path.join(__dirname, "../frontend/dist/index.html"));
-  });
-}
-
-// START SERVER ONLY AFTER DB CONNECTS
 connectDB()
   .then(() => {
     server.listen(PORT, () => {
