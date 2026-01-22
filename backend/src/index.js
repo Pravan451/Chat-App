@@ -19,10 +19,16 @@ app.use(express.json());
 app.use(cookieParser());
 app.use(
   cors({
-    origin: "http://localhost:5173",
+    origin: [
+      "http://localhost:5173",
+      "https://chat-app1-5vrv.onrender.com",
+      "https://chat-app1-kdzf.onrender.com"
+    ],
     credentials: true,
   })
 );
+
+
 
 // routes
 app.use("/api/auth", authRoutes);
