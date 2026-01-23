@@ -9,10 +9,11 @@ export const generateToken = (userId, res) => {
     { expiresIn: "7d" }
   );
 
-  res.cookie("token", token, {
-    httpOnly: true,
-    secure: true,        // REQUIRED on Render
-    sameSite: "None",    // REQUIRED for cross-domain cookies
-    maxAge: 7 * 24 * 60 * 60 * 1000,
-  });
+  res.cookie("jwt", token, {
+  maxAge: 7 * 24 * 60 * 60 * 1000,
+  httpOnly: true,
+  sameSite: "none", // 🔥 REQUIRED for cross-site
+  secure: true,     // 🔥 REQUIRED for HTTPS
+});
+
 };
