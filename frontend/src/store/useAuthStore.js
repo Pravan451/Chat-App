@@ -4,7 +4,9 @@ import toast from "react-hot-toast";
 import { io } from "socket.io-client";
 
 const BASE_URL =
-  import.meta.env.MODE === "development" ? "http://localhost:5001" : "/";
+  import.meta.env.MODE === "development"
+    ? "http://localhost:5001"
+    : "https://chat-app-mg4s.onrender.com";
 
 export const useAuthStore = create((set, get) => ({
   authUser: null,
@@ -84,23 +86,30 @@ export const useAuthStore = create((set, get) => ({
   },
 
   connectSocket: () => {
-    const { authUser } = get();
-    if (!authUser || get().socket?.connected) return;
+  const { authUser, socket } = get();
 
-    const socket = io(BASE_URL, {
-      query: {
-        userId: authUser._id,
-      },
-    });
-    socket.connect();
+  if (!authUser || socket) return;
 
-    set({ socket: socket });
+  const newSocket = io(BASE_URL, {
+    query: {
+      userId: authUser._id,
+    },
+    withCredentials: true,
+  });
 
-    socket.on("getOnlineUsers", (userIds) => {
-      set({ onlineUsers: userIds });
-    });
-  },
-  disconnectSocket: () => {
-    if (get().socket?.connected) get().socket.disconnect();
-  },
+  set({ socket: newSocket });
+
+  newSocket.on("getOnlineUsers", (userIds) => {
+    set({ onlineUsers: userIds });
+  });
+},
+
+ disconnectSocket: () => {
+  const { socket } = get();
+  if (socket) {
+    socket.disconnect();
+    set({ socket: null, onlineUsers: [] });
+  }
+},
+
 }));
