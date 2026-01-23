@@ -18,18 +18,16 @@ export const useAuthStore = create((set, get) => ({
   socket: null,
 
   checkAuth: async () => {
-    try {
-      const res = await axiosInstance.get("/auth/check");
+  try {
+    const res = await axiosInstance.get("/auth/check");
+    set({ authUser: res.data });
+  } catch (error) {
+    set({ authUser: null });
+  } finally {
+    set({ isCheckingAuth: false });
+  }
+},
 
-      set({ authUser: res.data });
-      get().connectSocket();
-    } catch (error) {
-      console.log("Error in checkAuth:", error);
-      set({ authUser: null });
-    } finally {
-      set({ isCheckingAuth: false });
-    }
-  },
 
   signup: async (data) => {
     set({ isSigningUp: true });
@@ -90,19 +88,22 @@ export const useAuthStore = create((set, get) => ({
 
   if (!authUser || socket) return;
 
-  const newSocket = io(BASE_URL, {
-    query: {
-      userId: authUser._id,
-    },
+  const newSocket = io("https://chat-app-mg4s.onrender.com", {
+    query: { userId: authUser._id },
     withCredentials: true,
   });
 
   set({ socket: newSocket });
 
+  newSocket.on("connect", () => {
+    console.log("Socket connected:", newSocket.id);
+  });
+
   newSocket.on("getOnlineUsers", (userIds) => {
     set({ onlineUsers: userIds });
   });
 },
+
 
  disconnectSocket: () => {
   const { socket } = get();
@@ -111,5 +112,6 @@ export const useAuthStore = create((set, get) => ({
     set({ socket: null, onlineUsers: [] });
   }
 },
+
 
 }));
